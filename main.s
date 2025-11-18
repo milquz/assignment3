@@ -4,12 +4,12 @@
 # I wrote the code on Mac, so if there are any weird code lines
 # that's because the normal ones didn't come through on Mac :))
 
-.extern _printf
-.extern _scanf
-.extern _rand
-.extern _srand
+.extern printf
+.extern scanf
+.extern rand
+.extern srand
 
-.section __DATA,__data
+.section .data
 tries:
     .long 5
 boundary:
@@ -21,7 +21,7 @@ rounds_won:
 flag_easy_mode:
     .byte 0
 
-.section __TEXT,__cstring
+.section .rodata
 ask_seed_msg:
     .string "Enter configuration seed: "
 ask_guess_msg:
@@ -45,7 +45,7 @@ win_msg:
 lose_msg:
     .string "\nGame over, you lost :(. The correct answer was %d "
 
-.section __BSS,__bss
+.section .bss
 user_input:
     .space 4 # skip 4 doesn't work on Mac
 seed:
@@ -54,10 +54,11 @@ number:
     .space 4
 
 
-.section __TEXT,__text
-.globl	_main
+.section .text
+.globl	main
+.type main, @function
 
-_main:
+main:
     # start
     pushq %rbp
     movq %rsp, %rbp
@@ -66,18 +67,18 @@ _main:
         # I use lea because i code on macOS
     leaq ask_seed_msg(%rip), %rdi 
     xorq %rax, %rax
-    call _printf
+    call printf
 
     # scanf("%d") - read the int input for the seed
     leaq scanf_int(%rip), %rdi
     leaq seed(%rip), %rsi
     xorq %rax, %rax
-    call _scanf
+    call scanf
 
     # generating a random number
     movl seed(%rip), %edi
-    call _srand # generating seed
-    call _rand # ganerating
+    call srand # generating seed
+    call rand # ganerating
     movl boundary(%rip), %ecx
     xorl %edx, %edx
     divl %ecx # EAX / ECX -> random_number / N
@@ -87,23 +88,23 @@ _main:
     # easy mode
     leaq easy_mode_msg(%rip), %rdi
     xorq %rax, %rax
-    call _printf
+    call printf
     leaq scanf_string(%rip), %rdi
     leaq flag_easy_mode(%rip), %rsi
     xor %rax, %rax
-    call _scanf
+    call scanf
 
 guess:
     # asking for a guess
     leaq ask_guess_msg(%rip), %rdi
     xorq %rax, %rax
-    call _printf
+    call printf
 
     # scanf("%d", user_input)
     leaq scanf_int(%rip), %rdi
     leaq user_input(%rip), %rsi
     xorq %rax, %rax
-    call _scanf
+    call scanf
 
     # incriment counter of tries
     incl counter(%rip) # counter++
@@ -118,7 +119,7 @@ guess:
     # incorrect one
     leaq incorrect_msg(%rip), %rdi
     xorq %rax, %rax
-    call _printf
+    call printf
     cmpl $'y', flag_easy_mode(%rip) # checking easy mode flag
     jne else
     movl user_input(%rip), %eax
@@ -126,13 +127,13 @@ guess:
     jg greater
     leaq guess_below_msg(%rip), %rdi
     xorq %rax, %rax
-    call _printf
+    call printf
     jmp else # finish the loop
 
 greater:
     leaq guess_above_msg(%rip), %rdi
     xorq %rax, %rax
-    call _printf
+    call printf
 
 else:
     # counter++, then loop
@@ -149,13 +150,13 @@ double:
     movl $0, counter(%rip) # setting counter of tries to 0
     leaq double_mode_msg(%rip), %rdi
     xorq %rax, %rax
-    call _printf
+    call printf
 
     # scanf("%s", user_input)
     leaq scanf_string(%rip), %rdi
     leaq user_input(%rip), %rsi
     xorq %rax, %rax
-    call _scanf
+    call scanf
 
     # compare input, if "n" then move to win part
     movl user_input(%rip), %eax
@@ -171,14 +172,14 @@ win:
     leaq win_msg(%rip), %rdi
     movl rounds_won(%rip), %esi
     xorq %rax, %rax
-    call _printf
+    call printf
     jmp exit
 
 lose:
     leaq lose_msg(%rip), %rdi
     movl number(%rip), %esi
     xorq %rax, %rax
-    call _printf
+    call printf
     jmp exit
 
 exit:
